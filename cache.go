@@ -24,7 +24,7 @@ var ErrKeyNotFound = errors.New("key not found")
 // Cache interface is implemeted by all individual caches
 type Cache interface {
 	Set(key, value interface{}) error
-	SetWithExpire(key, value interface{}, expiration time.Duration) error
+	SetWithTTL(key, value interface{}, expiration time.Duration) error
 	Get(key interface{}) (interface{}, error)
 	GetIFPresent(key interface{}) (interface{}, error)
 	GetALL(checkExpired bool) map[interface{}]interface{}
@@ -42,6 +42,7 @@ type baseCache struct {
 	clock           Clock
 	size            int
 	mu              sync.RWMutex
+	defaultTTL      *time.Duration
 	onAdd           func(key, value interface{})
 	onDel           func(key, value interface{})
 	onEvict         func(key, value interface{})
@@ -57,6 +58,7 @@ type Config struct {
 	cacheType int
 	// Size config option is used to provide size of cache
 	Size            int
+	DefaultTTL      time.Duration
 	OnAdd           func(key, value interface{})
 	OnDel           func(key, value interface{})
 	OnEvict         func(key, value interface{})
@@ -68,6 +70,7 @@ type Config struct {
 
 func buildCache(c *baseCache, cb Config) {
 	c.clock = NewRealClock()
+	c.defaultTTL = &cb.DefaultTTL
 	c.size = cb.Size
 	c.onAdd = cb.OnAdd
 	c.onDel = cb.OnDel
