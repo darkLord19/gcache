@@ -15,7 +15,7 @@ type LFUCache struct {
 func NewLFU(size int) *LFUCache {
 	cb := &CacheBuilder{
 		clock: NewRealClock(),
-		tp:    TYPE_LFU,
+		tp:    TypeLFU,
 		size:  size,
 	}
 	return newLFUCache(cb)

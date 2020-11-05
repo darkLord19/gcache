@@ -13,7 +13,7 @@ type SimpleCache struct {
 func NewSimple(size int) *SimpleCache {
 	cb := &CacheBuilder{
 		clock: NewRealClock(),
-		tp:    TYPE_SIMPLE,
+		tp:    TypeSimple,
 		size:  size,
 	}
 	return newSimpleCache(cb)

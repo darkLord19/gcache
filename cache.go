@@ -8,10 +8,14 @@ import (
 )
 
 const (
-	TYPE_SIMPLE = "simple"
-	TYPE_LRU    = "lru"
-	TYPE_LFU    = "lfu"
-	TYPE_ARC    = "arc"
+	// TypeSimple represents simple cache
+	TypeSimple int = iota
+	// TypeLRU represents LRU cache
+	TypeLRU
+	// TypeLFU represents LFU cache
+	TypeLFU
+	// TypeARC represents ARC cache
+	TypeARC
 )
 
 // ErrKeyNotFound is returned when key is not found in cache
@@ -61,7 +65,7 @@ type (
 
 type CacheBuilder struct {
 	clock            Clock
-	tp               string
+	tp               int
 	size             int
 	loaderExpireFunc LoaderExpireFunc
 	evictedFunc      EvictedFunc
@@ -95,7 +99,7 @@ func (cb *CacheBuilder) LoaderExpireFunc(loaderExpireFunc LoaderExpireFunc) *Cac
 	return cb
 }
 
-func (cb *CacheBuilder) EvictType(tp string) *CacheBuilder {
+func (cb *CacheBuilder) EvictType(tp int) *CacheBuilder {
 	cb.tp = tp
 	return cb
 }

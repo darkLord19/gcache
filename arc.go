@@ -20,7 +20,7 @@ type ARC struct {
 func NewARC(size int) *ARC {
 	cb := &CacheBuilder{
 		clock: NewRealClock(),
-		tp:    TYPE_LFU,
+		tp:    TypeLFU,
 		size:  size,
 	}
 	return newARC(cb)

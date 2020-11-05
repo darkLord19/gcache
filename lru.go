@@ -15,7 +15,7 @@ type LRUCache struct {
 func NewLRU(size int) *LRUCache {
 	cb := &CacheBuilder{
 		clock: NewRealClock(),
-		tp:    TYPE_LRU,
+		tp:    TypeLRU,
 		size:  size,
 	}
 	return newLRUCache(cb)

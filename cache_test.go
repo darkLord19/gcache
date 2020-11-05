@@ -209,10 +209,10 @@ func TestDeserializeFunc(t *testing.T) {
 	var cases = []struct {
 		tp string
 	}{
-		{TYPE_SIMPLE},
-		{TYPE_LRU},
-		{TYPE_LFU},
-		{TYPE_ARC},
+		{TypeSimple},
+		{TypeLRU},
+		{TypeLFU},
+		{TypeARC},
 	}
 
 	for _, cs := range cases {
@@ -268,10 +268,10 @@ func TestDeserializeFunc(t *testing.T) {
 
 func TestExpiredItems(t *testing.T) {
 	var tps = []string{
-		TYPE_SIMPLE,
-		TYPE_LRU,
-		TYPE_LFU,
-		TYPE_ARC,
+		TypeSimple,
+		TypeLRU,
+		TypeLFU,
+		TypeARC,
 	}
 	for _, tp := range tps {
 		t.Run(tp, func(t *testing.T) {
