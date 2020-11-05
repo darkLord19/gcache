@@ -12,18 +12,13 @@ type LFUCache struct {
 	freqList *list.List // list for freqEntry
 }
 
-func NewLFU(size int) *LFUCache {
-	cb := &CacheBuilder{
-		clock: NewRealClock(),
-		tp:    TypeLFU,
-		size:  size,
-	}
-	return newLFUCache(cb)
+func NewLFU(config Config) *LFUCache {
+	return newLFUCache(config)
 }
 
-func newLFUCache(cb *CacheBuilder) *LFUCache {
+func newLFUCache(config Config) *LFUCache {
 	c := &LFUCache{}
-	buildCache(&c.baseCache, cb)
+	buildCache(&c.baseCache, config)
 
 	c.init()
 	c.loadGroup.cache = c

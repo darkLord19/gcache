@@ -12,18 +12,13 @@ type LRUCache struct {
 	evictList *list.List
 }
 
-func NewLRU(size int) *LRUCache {
-	cb := &CacheBuilder{
-		clock: NewRealClock(),
-		tp:    TypeLRU,
-		size:  size,
-	}
-	return newLRUCache(cb)
+func NewLRU(config Config) *LRUCache {
+	return newLRUCache(config)
 }
 
-func newLRUCache(cb *CacheBuilder) *LRUCache {
+func newLRUCache(config Config) *LRUCache {
 	c := &LRUCache{}
-	buildCache(&c.baseCache, cb)
+	buildCache(&c.baseCache, config)
 
 	c.init()
 	c.loadGroup.cache = c

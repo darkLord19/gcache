@@ -10,18 +10,13 @@ type SimpleCache struct {
 	items map[interface{}]*simpleItem
 }
 
-func NewSimple(size int) *SimpleCache {
-	cb := &CacheBuilder{
-		clock: NewRealClock(),
-		tp:    TypeSimple,
-		size:  size,
-	}
-	return newSimpleCache(cb)
+func NewSimple(config Config) *SimpleCache {
+	return newSimpleCache(config)
 }
 
-func newSimpleCache(cb *CacheBuilder) *SimpleCache {
+func newSimpleCache(config Config) *SimpleCache {
 	c := &SimpleCache{}
-	buildCache(&c.baseCache, cb)
+	buildCache(&c.baseCache, config)
 
 	c.init()
 	c.loadGroup.cache = c

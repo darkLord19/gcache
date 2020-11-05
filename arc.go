@@ -17,18 +17,13 @@ type ARC struct {
 	b2   *arcList
 }
 
-func NewARC(size int) *ARC {
-	cb := &CacheBuilder{
-		clock: NewRealClock(),
-		tp:    TypeLFU,
-		size:  size,
-	}
-	return newARC(cb)
+func NewARC(config Config) *ARC {
+	return newARC(config)
 }
 
-func newARC(cb *CacheBuilder) *ARC {
+func newARC(config Config) *ARC {
 	c := &ARC{}
-	buildCache(&c.baseCache, cb)
+	buildCache(&c.baseCache, config)
 
 	c.init()
 	c.loadGroup.cache = c

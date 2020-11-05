@@ -39,111 +39,41 @@ type Cache interface {
 }
 
 type baseCache struct {
-	clock            Clock
-	size             int
-	loaderExpireFunc LoaderExpireFunc
-	evictedFunc      EvictedFunc
-	purgeVisitorFunc PurgeVisitorFunc
-	addedFunc        AddedFunc
-	deserializeFunc  DeserializeFunc
-	serializeFunc    SerializeFunc
-	expiration       *time.Duration
-	mu               sync.RWMutex
-	loadGroup        Group
+	clock           Clock
+	size            int
+	mu              sync.RWMutex
+	onAdd           func(key, value interface{})
+	onDel           func(key, value interface{})
+	onEvict         func(key, value interface{})
+	onMiss          func(key interface{})
+	onPurge         func(key, value interface{})
+	deserializeWith func(interface{}, interface{}) (interface{}, error)
+	serializeWith   func(interface{}, interface{}) (interface{}, error)
+	loadGroup       Group
 	*stats
 }
 
-type (
-	LoaderFunc       func(interface{}) (interface{}, error)
-	LoaderExpireFunc func(interface{}) (interface{}, *time.Duration, error)
-	EvictedFunc      func(interface{}, interface{})
-	PurgeVisitorFunc func(interface{}, interface{})
-	AddedFunc        func(interface{}, interface{})
-	DeserializeFunc  func(interface{}, interface{}) (interface{}, error)
-	SerializeFunc    func(interface{}, interface{}) (interface{}, error)
-)
-
-type CacheBuilder struct {
-	clock            Clock
-	tp               int
-	size             int
-	loaderExpireFunc LoaderExpireFunc
-	evictedFunc      EvictedFunc
-	purgeVisitorFunc PurgeVisitorFunc
-	addedFunc        AddedFunc
-	expiration       *time.Duration
-	deserializeFunc  DeserializeFunc
-	serializeFunc    SerializeFunc
+type Config struct {
+	cacheType int
+	// Size config option is used to provide size of cache
+	Size            int
+	OnAdd           func(key, value interface{})
+	OnDel           func(key, value interface{})
+	OnEvict         func(key, value interface{})
+	OnMiss          func(key interface{})
+	OnPurge         func(key, value interface{})
+	DeserializeWith func(interface{}, interface{}) (interface{}, error)
+	SerializeWith   func(interface{}, interface{}) (interface{}, error)
 }
 
-func (cb *CacheBuilder) Clock(clock Clock) *CacheBuilder {
-	cb.clock = clock
-	return cb
-}
-
-// Set a loader function.
-// loaderFunc: create a new value with this function if cached value is expired.
-func (cb *CacheBuilder) LoaderFunc(loaderFunc LoaderFunc) *CacheBuilder {
-	cb.loaderExpireFunc = func(k interface{}) (interface{}, *time.Duration, error) {
-		v, err := loaderFunc(k)
-		return v, nil, err
-	}
-	return cb
-}
-
-// Set a loader function with expiration.
-// loaderExpireFunc: create a new value with this function if cached value is expired.
-// If nil returned instead of time.Duration from loaderExpireFunc than value will never expire.
-func (cb *CacheBuilder) LoaderExpireFunc(loaderExpireFunc LoaderExpireFunc) *CacheBuilder {
-	cb.loaderExpireFunc = loaderExpireFunc
-	return cb
-}
-
-func (cb *CacheBuilder) EvictType(tp int) *CacheBuilder {
-	cb.tp = tp
-	return cb
-}
-
-func (cb *CacheBuilder) EvictedFunc(evictedFunc EvictedFunc) *CacheBuilder {
-	cb.evictedFunc = evictedFunc
-	return cb
-}
-
-func (cb *CacheBuilder) PurgeVisitorFunc(purgeVisitorFunc PurgeVisitorFunc) *CacheBuilder {
-	cb.purgeVisitorFunc = purgeVisitorFunc
-	return cb
-}
-
-func (cb *CacheBuilder) AddedFunc(addedFunc AddedFunc) *CacheBuilder {
-	cb.addedFunc = addedFunc
-	return cb
-}
-
-func (cb *CacheBuilder) DeserializeFunc(deserializeFunc DeserializeFunc) *CacheBuilder {
-	cb.deserializeFunc = deserializeFunc
-	return cb
-}
-
-func (cb *CacheBuilder) SerializeFunc(serializeFunc SerializeFunc) *CacheBuilder {
-	cb.serializeFunc = serializeFunc
-	return cb
-}
-
-func (cb *CacheBuilder) Expiration(expiration time.Duration) *CacheBuilder {
-	cb.expiration = &expiration
-	return cb
-}
-
-func buildCache(c *baseCache, cb *CacheBuilder) {
-	c.clock = cb.clock
-	c.size = cb.size
-	c.loaderExpireFunc = cb.loaderExpireFunc
-	c.expiration = cb.expiration
-	c.addedFunc = cb.addedFunc
-	c.deserializeFunc = cb.deserializeFunc
-	c.serializeFunc = cb.serializeFunc
-	c.evictedFunc = cb.evictedFunc
-	c.purgeVisitorFunc = cb.purgeVisitorFunc
+func buildCache(c *baseCache, cb Config) {
+	c.clock = NewRealClock()
+	c.size = cb.Size
+	c.onAdd = cb.OnAdd
+	c.onDel = cb.OnDel
+	c.onEvict = cb.OnEvict
+	c.onMiss = cb.OnMiss
+	c.onPurge = cb.OnPurge
 	c.stats = &stats{}
 }
 
