@@ -12,6 +12,15 @@ type LRUCache struct {
 	evictList *list.List
 }
 
+func NewLRU(size int) *LRUCache {
+	cb := &CacheBuilder{
+		clock: NewRealClock(),
+		tp:    TYPE_LRU,
+		size:  size,
+	}
+	return newLRUCache(cb)
+}
+
 func newLRUCache(cb *CacheBuilder) *LRUCache {
 	c := &LRUCache{}
 	buildCache(&c.baseCache, cb)
@@ -93,18 +102,18 @@ func (c *LRUCache) SetWithExpire(key, value interface{}, expiration time.Duratio
 // generate a value using `LoaderFunc` method returns value.
 func (c *LRUCache) Get(key interface{}) (interface{}, error) {
 	v, err := c.get(key, false)
-	if err == KeyNotFoundError {
+	if err == ErrKeyNotFound {
 		return c.getWithLoader(key, true)
 	}
 	return v, err
 }
 
 // GetIFPresent gets a value from cache pool using key if it exists.
-// If it dose not exists key, returns KeyNotFoundError.
+// If it dose not exists key, returns ErrKeyNotFound.
 // And send a request which refresh value for specified key if cache object has LoaderFunc.
 func (c *LRUCache) GetIFPresent(key interface{}) (interface{}, error) {
 	v, err := c.get(key, false)
-	if err == KeyNotFoundError {
+	if err == ErrKeyNotFound {
 		return c.getWithLoader(key, false)
 	}
 	return v, err
@@ -141,12 +150,12 @@ func (c *LRUCache) getValue(key interface{}, onLoad bool) (interface{}, error) {
 	if !onLoad {
 		c.stats.IncrMissCount()
 	}
-	return nil, KeyNotFoundError
+	return nil, ErrKeyNotFound
 }
 
 func (c *LRUCache) getWithLoader(key interface{}, isWait bool) (interface{}, error) {
 	if c.loaderExpireFunc == nil {
-		return nil, KeyNotFoundError
+		return nil, ErrKeyNotFound
 	}
 	value, _, err := c.load(key, func(v interface{}, expiration *time.Duration, e error) (interface{}, error) {
 		if e != nil {

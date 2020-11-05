@@ -14,8 +14,10 @@ const (
 	TYPE_ARC    = "arc"
 )
 
-var KeyNotFoundError = errors.New("Key not found.")
+// ErrKeyNotFound is returned when key is not found in cache
+var ErrKeyNotFound = errors.New("key not found")
 
+// Cache interface is implemeted by all individual caches
 type Cache interface {
 	Set(key, value interface{}) error
 	SetWithExpire(key, value interface{}, expiration time.Duration) error
@@ -70,14 +72,6 @@ type CacheBuilder struct {
 	serializeFunc    SerializeFunc
 }
 
-func New(size int) *CacheBuilder {
-	return &CacheBuilder{
-		clock: NewRealClock(),
-		tp:    TYPE_SIMPLE,
-		size:  size,
-	}
-}
-
 func (cb *CacheBuilder) Clock(clock Clock) *CacheBuilder {
 	cb.clock = clock
 	return cb
@@ -104,22 +98,6 @@ func (cb *CacheBuilder) LoaderExpireFunc(loaderExpireFunc LoaderExpireFunc) *Cac
 func (cb *CacheBuilder) EvictType(tp string) *CacheBuilder {
 	cb.tp = tp
 	return cb
-}
-
-func (cb *CacheBuilder) Simple() *CacheBuilder {
-	return cb.EvictType(TYPE_SIMPLE)
-}
-
-func (cb *CacheBuilder) LRU() *CacheBuilder {
-	return cb.EvictType(TYPE_LRU)
-}
-
-func (cb *CacheBuilder) LFU() *CacheBuilder {
-	return cb.EvictType(TYPE_LFU)
-}
-
-func (cb *CacheBuilder) ARC() *CacheBuilder {
-	return cb.EvictType(TYPE_ARC)
 }
 
 func (cb *CacheBuilder) EvictedFunc(evictedFunc EvictedFunc) *CacheBuilder {
@@ -150,29 +128,6 @@ func (cb *CacheBuilder) SerializeFunc(serializeFunc SerializeFunc) *CacheBuilder
 func (cb *CacheBuilder) Expiration(expiration time.Duration) *CacheBuilder {
 	cb.expiration = &expiration
 	return cb
-}
-
-func (cb *CacheBuilder) Build() Cache {
-	if cb.size <= 0 && cb.tp != TYPE_SIMPLE {
-		panic("gcache: Cache size <= 0")
-	}
-
-	return cb.build()
-}
-
-func (cb *CacheBuilder) build() Cache {
-	switch cb.tp {
-	case TYPE_SIMPLE:
-		return newSimpleCache(cb)
-	case TYPE_LRU:
-		return newLRUCache(cb)
-	case TYPE_LFU:
-		return newLFUCache(cb)
-	case TYPE_ARC:
-		return newARC(cb)
-	default:
-		panic("gcache: Unknown type " + cb.tp)
-	}
 }
 
 func buildCache(c *baseCache, cb *CacheBuilder) {

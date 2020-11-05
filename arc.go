@@ -17,6 +17,15 @@ type ARC struct {
 	b2   *arcList
 }
 
+func NewARC(size int) *ARC {
+	cb := &CacheBuilder{
+		clock: NewRealClock(),
+		tp:    TYPE_LFU,
+		size:  size,
+	}
+	return newARC(cb)
+}
+
 func newARC(cb *CacheBuilder) *ARC {
 	c := &ARC{}
 	buildCache(&c.baseCache, cb)
@@ -165,18 +174,18 @@ func (c *ARC) set(key, value interface{}) (interface{}, error) {
 // Get a value from cache pool using key if it exists. If not exists and it has LoaderFunc, it will generate the value using you have specified LoaderFunc method returns value.
 func (c *ARC) Get(key interface{}) (interface{}, error) {
 	v, err := c.get(key, false)
-	if err == KeyNotFoundError {
+	if err == ErrKeyNotFound {
 		return c.getWithLoader(key, true)
 	}
 	return v, err
 }
 
 // GetIFPresent gets a value from cache pool using key if it exists.
-// If it dose not exists key, returns KeyNotFoundError.
+// If it dose not exists key, returns ErrKeyNotFound.
 // And send a request which refresh value for specified key if cache object has LoaderFunc.
 func (c *ARC) GetIFPresent(key interface{}) (interface{}, error) {
 	v, err := c.get(key, false)
-	if err == KeyNotFoundError {
+	if err == ErrKeyNotFound {
 		return c.getWithLoader(key, false)
 	}
 	return v, err
@@ -234,12 +243,12 @@ func (c *ARC) getValue(key interface{}, onLoad bool) (interface{}, error) {
 	if !onLoad {
 		c.stats.IncrMissCount()
 	}
-	return nil, KeyNotFoundError
+	return nil, ErrKeyNotFound
 }
 
 func (c *ARC) getWithLoader(key interface{}, isWait bool) (interface{}, error) {
 	if c.loaderExpireFunc == nil {
-		return nil, KeyNotFoundError
+		return nil, ErrKeyNotFound
 	}
 	value, _, err := c.load(key, func(v interface{}, expiration *time.Duration, e error) (interface{}, error) {
 		if e != nil {

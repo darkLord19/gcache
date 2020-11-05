@@ -12,6 +12,15 @@ type LFUCache struct {
 	freqList *list.List // list for freqEntry
 }
 
+func NewLFU(size int) *LFUCache {
+	cb := &CacheBuilder{
+		clock: NewRealClock(),
+		tp:    TYPE_LFU,
+		size:  size,
+	}
+	return newLFUCache(cb)
+}
+
 func newLFUCache(cb *CacheBuilder) *LFUCache {
 	c := &LFUCache{}
 	buildCache(&c.baseCache, cb)
@@ -101,18 +110,18 @@ func (c *LFUCache) set(key, value interface{}) (interface{}, error) {
 // generate a value using `LoaderFunc` method returns value.
 func (c *LFUCache) Get(key interface{}) (interface{}, error) {
 	v, err := c.get(key, false)
-	if err == KeyNotFoundError {
+	if err == ErrKeyNotFound {
 		return c.getWithLoader(key, true)
 	}
 	return v, err
 }
 
 // GetIFPresent gets a value from cache pool using key if it exists.
-// If it dose not exists key, returns KeyNotFoundError.
+// If it dose not exists key, returns ErrKeyNotFound.
 // And send a request which refresh value for specified key if cache object has LoaderFunc.
 func (c *LFUCache) GetIFPresent(key interface{}) (interface{}, error) {
 	v, err := c.get(key, false)
-	if err == KeyNotFoundError {
+	if err == ErrKeyNotFound {
 		return c.getWithLoader(key, false)
 	}
 	return v, err
@@ -148,12 +157,12 @@ func (c *LFUCache) getValue(key interface{}, onLoad bool) (interface{}, error) {
 	if !onLoad {
 		c.stats.IncrMissCount()
 	}
-	return nil, KeyNotFoundError
+	return nil, ErrKeyNotFound
 }
 
 func (c *LFUCache) getWithLoader(key interface{}, isWait bool) (interface{}, error) {
 	if c.loaderExpireFunc == nil {
-		return nil, KeyNotFoundError
+		return nil, ErrKeyNotFound
 	}
 	value, _, err := c.load(key, func(v interface{}, expiration *time.Duration, e error) (interface{}, error) {
 		if e != nil {

@@ -10,6 +10,15 @@ type SimpleCache struct {
 	items map[interface{}]*simpleItem
 }
 
+func NewSimple(size int) *SimpleCache {
+	cb := &CacheBuilder{
+		clock: NewRealClock(),
+		tp:    TYPE_SIMPLE,
+		size:  size,
+	}
+	return newSimpleCache(cb)
+}
+
 func newSimpleCache(cb *CacheBuilder) *SimpleCache {
 	c := &SimpleCache{}
 	buildCache(&c.baseCache, cb)
@@ -91,18 +100,18 @@ func (c *SimpleCache) set(key, value interface{}) (interface{}, error) {
 // generate a value using `LoaderFunc` method returns value.
 func (c *SimpleCache) Get(key interface{}) (interface{}, error) {
 	v, err := c.get(key, false)
-	if err == KeyNotFoundError {
+	if err == ErrKeyNotFound {
 		return c.getWithLoader(key, true)
 	}
 	return v, err
 }
 
 // GetIFPresent gets a value from cache pool using key if it exists.
-// If it dose not exists key, returns KeyNotFoundError.
+// If it dose not exists key, returns ErrKeyNotFound.
 // And send a request which refresh value for specified key if cache object has LoaderFunc.
 func (c *SimpleCache) GetIFPresent(key interface{}) (interface{}, error) {
 	v, err := c.get(key, false)
-	if err == KeyNotFoundError {
+	if err == ErrKeyNotFound {
 		return c.getWithLoader(key, false)
 	}
 	return v, nil
@@ -137,12 +146,12 @@ func (c *SimpleCache) getValue(key interface{}, onLoad bool) (interface{}, error
 	if !onLoad {
 		c.stats.IncrMissCount()
 	}
-	return nil, KeyNotFoundError
+	return nil, ErrKeyNotFound
 }
 
 func (c *SimpleCache) getWithLoader(key interface{}, isWait bool) (interface{}, error) {
 	if c.loaderExpireFunc == nil {
-		return nil, KeyNotFoundError
+		return nil, ErrKeyNotFound
 	}
 	value, _, err := c.load(key, func(v interface{}, expiration *time.Duration, e error) (interface{}, error) {
 		if e != nil {
