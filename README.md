@@ -1,4 +1,4 @@
-# GCache
+# ucache
 
 Cache library for golang. It supports expirable Cache, LFU, LRU and ARC.
 
